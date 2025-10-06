@@ -1,62 +1,36 @@
 import Evaluation from "../models/Evaluation.js";
 import Teacher from "../models/Teacher.js";
 
-// Conversión de texto a valor numérico
-const convertirValor = (texto) => {
-  const mapa = {
-    Excelente: 5,
-    Bueno: 4,
-    Regular: 3,
-    Malo: 2,
-    Pésimo: 1,
-  };
-  return mapa[texto] || 3; // valor neutro si no coincide
+// Convierte texto (“Excelente”, “Bueno”, etc.) a número 5..1
+const toScore = (v) => {
+  if (typeof v === "number") return v;
+  const map = { Excelente: 5, Bueno: 4, Regular: 3, Deficiente: 2, Malo: 1 };
+  return map[v] ?? 3;
 };
 
 export const addEvaluation = async (req, res) => {
   try {
-    const {
-      teacher, // nombre del catedrático
-      dominio,
-      claridad,
-      puntualidad,
-      justa,
-      cumplimiento,
-      comentario,
-    } = req.body;
+    const { teacherId, q1, q2, q3, q4, q5, comment, dominio, claridad, puntualidad, justa, cumplimiento } = req.body;
 
-    // Validaciones básicas
-    if (!teacher)
-      return res.status(400).json({ message: "El campo 'teacher' es obligatorio" });
-    if (!comentario || comentario.trim() === "")
-      return res.status(400).json({ message: "El comentario es obligatorio" });
+    if (!teacherId) return res.status(400).json({ message: "teacherId es requerido" });
+    if (!comment || comment.trim() === "") return res.status(400).json({ message: "Comentario obligatorio" });
 
-    // Buscar o crear al catedrático si no existe
-    let teacherDoc = await Teacher.findOne({ name: teacher });
-    if (!teacherDoc) {
-      teacherDoc = await Teacher.create({
-        name: teacher,
-        course: "Sin especificar",
-      });
-    }
+    const teacher = await Teacher.findById(teacherId);
+    if (!teacher) return res.status(404).json({ message: "Catedrático no encontrado" });
 
-    // Crear la evaluación
-    const nuevaEvaluacion = await Evaluation.create({
-      teacherId: teacherDoc._id,
-      q1: convertirValor(dominio),
-      q2: convertirValor(claridad),
-      q3: convertirValor(puntualidad),
-      q4: convertirValor(justa),
-      q5: convertirValor(cumplimiento),
-      comment: comentario,
+    const evaluation = await Evaluation.create({
+      teacherId,
+      q1: toScore(q1 ?? dominio),
+      q2: toScore(q2 ?? claridad),
+      q3: toScore(q3 ?? puntualidad),
+      q4: toScore(q4 ?? justa),
+      q5: toScore(q5 ?? cumplimiento),
+      comment,
     });
 
-    res.status(201).json({
-      message: "Evaluación registrada con éxito",
-      data: nuevaEvaluacion,
-    });
+    res.status(201).json(evaluation);
   } catch (err) {
-    console.error("Error al guardar evaluación:", err);
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 };
@@ -64,8 +38,10 @@ export const addEvaluation = async (req, res) => {
 export const getStats = async (req, res) => {
   try {
     const { teacherId } = req.query;
+    if (!teacherId) return res.status(400).json({ message: "teacherId es requerido" });
+
     const teacher = await Teacher.findById(teacherId);
-    if (!teacher) return res.status(404).json({ message: "Catedrático no encontrado" });
+    if (!teacher) return res.status(404).json({ message: "No encontrado" });
 
     const evaluations = await Evaluation.find({ teacherId });
     const all = await Evaluation.find();
@@ -75,10 +51,8 @@ export const getStats = async (req, res) => {
         ? 0
         : Number(
             (
-              evs.reduce(
-                (sum, e) => sum + (e.q1 + e.q2 + e.q3 + e.q4 + e.q5) / 5,
-                0
-              ) / evs.length
+              evs.reduce((sum, e) => sum + (e.q1 + e.q2 + e.q3 + e.q4 + e.q5) / 5, 0) /
+              evs.length
             ).toFixed(2)
           );
 

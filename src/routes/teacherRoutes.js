@@ -1,8 +1,12 @@
 import express from "express";
-import { getTeachers, addTeacher } from "../controllers/teacherController.js";
+import Teacher from "../models/Teacher.js";
+
 const router = express.Router();
 
-router.get("/", getTeachers);
-router.post("/", addTeacher);
+// GET /api/teachers  -> lista completa
+router.get("/", async (_req, res) => {
+  const teachers = await Teacher.find().sort({ name: 1 });
+  res.json(teachers);
+});
 
 export default router;
