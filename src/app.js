@@ -8,16 +8,16 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Ruta base de prueba
+// ✅ Ruta principal
 app.get("/", (req, res) => {
   res.send("✅ API Evaluación funcionando correctamente");
 });
 
-// Rutas principales
+// ✅ Rutas principales
 app.use("/api/evaluations", evaluationRoutes);
 app.use("/api/teachers", teacherRoutes);
 
-// Catedráticos por defecto (solo se insertan si no hay ninguno)
+// ✅ Catedráticos por defecto
 const defaultTeachers = [
   { name: "Carlos Amilcar Tezo Palencia", course: "Desarrollo web" },
   { name: "Otto Rigoberto Ortiz Perez", course: "Analisis de Sistemas" },
@@ -26,17 +26,15 @@ const defaultTeachers = [
   { name: "Oscar Alejandro Paz Campos", course: "Bases de datos" },
 ];
 
+// ✅ Bloque que limpia e inserta los nuevos al iniciar
 (async () => {
   try {
-    const existing = await Teacher.countDocuments();
-    if (existing === 0) {
-      await Teacher.insertMany(defaultTeachers);
-      console.log("✅ Catedráticos iniciales agregados automáticamente");
-    } else {
-      console.log("ℹ️ Catedráticos ya existentes, no se insertan duplicados");
-    }
+    console.log("🧹 Eliminando catedráticos antiguos...");
+    await Teacher.deleteMany({});
+    await Teacher.insertMany(defaultTeachers);
+    console.log("✅ Catedráticos actualizados con éxito");
   } catch (err) {
-    console.error("❌ Error insertando catedráticos por defecto:", err.message);
+    console.error("❌ Error actualizando catedráticos:", err.message);
   }
 })();
 
