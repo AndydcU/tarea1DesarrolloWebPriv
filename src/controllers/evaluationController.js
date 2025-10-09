@@ -65,4 +65,15 @@ export const getStats = async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+
 };
+
+export const getComments = async (req, res) => {
+  try {
+    const evaluations = await Evaluation.find({}, "comment -_id");
+    res.json(evaluations);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
