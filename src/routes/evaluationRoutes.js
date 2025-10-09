@@ -1,10 +1,16 @@
 import express from "express";
-import { addEvaluation, getStats } from "../controllers/evaluationController.js";
-import { getComments } from "../controllers/evaluationController.js";
+import {
+  addEvaluation,
+  getStats,
+  getComments,
+  analyzeComments
+} from "../controllers/evaluationController.js";
+
 const router = express.Router();
 
-router.get("/comments", getComments);
 router.post("/", addEvaluation);
 router.get("/stats", getStats);
+router.get("/comments", getComments);
+router.get("/analyze", analyzeComments);
 
 export default router;
